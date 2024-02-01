@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -19,7 +20,7 @@ func init() {
 }
 
 func main() {
-	rootUrl := os.Args[1]
+	rootUrl := strings.TrimSuffix(os.Args[1], "/")
 	command := os.Args[2]
 	targetFile := os.Args[3]
 	sessionId := uuid.New().String()
@@ -75,6 +76,8 @@ func waitForResp(rootUrl string, sessionId string, doneChan chan bool) error {
 		}
 		log.Println("request done")
 		if resp.StatusCode != http.StatusOK {
+			log.Println(resp.Status)
+			io.Copy(os.Stdout, resp.Body)
 			panic(errors.New("download request error"))
 		}
 		defer resp.Body.Close()
